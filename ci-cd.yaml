@@ -1,0 +1,47 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test -- --coverage --testResultsProcessor=./node_modules/jest-junit
+        env:
+          CI: true
+
+      - name: Archive Test Results
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-results
+          path: coverage/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Download Test Results
+        uses: actions/download-artifact@v2
+        with:
+          name: test-results
+
+      # Add deployment steps here (e.g., deploy to hosting service)
+
